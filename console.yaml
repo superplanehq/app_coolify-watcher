@@ -1,4 +1,4 @@
-version: v1
+apiVersion: v1
 kind: Console
 metadata:
   canvasId: d97d1b41-e816-4eae-b57b-44e65da734d5
