@@ -19,7 +19,7 @@
       {
         "name": "ssh_secret_name",
         "label": "SSH Secret Name",
-        "type": "SECRET_PICKER",
+        "type": "secret_picker",
         "placeholder": "not-root",
         "description": "Make sure it's created in your org's secrets. The key should be \"pw\"",
         "required": true
