@@ -1,0 +1,254 @@
+sion: v1
+kind: Canvas
+metadata:
+  id: 0a770706-b2c1-462b-acb1-30e16253210a
+  name: Coolify Watcher
+  description: 'Health monitor for Coolify host and containers'
+spec:
+  nodes:
+    - component: coolify.controlApplication
+      configuration:
+        application: '{{ root().data.name }}'
+        operation: restart
+      id: coolify-controlapplication-coolify-controlapplication-j8d2ha
+      integration:
+        id: 6c5666c7-ca87-4861-9ccb-ecd97c029c1f
+      name: coolify.controlApplication
+      position:
+        x: 1824
+        'y': 936
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: ssh
+      configuration:
+        authentication:
+          authMethod: password
+          password:
+            key: pw
+            secret: {{ install_params.ssh_secret_name }}
+        commandFile: coolify-health.sh
+        commandSource: file
+        host: {{ install_params.ssh_host }}
+        port: 22
+        timeout: 60
+        username: {{ install_params.ssh_user }}
+      id: ssh-ssh-jca97f
+      name: sshDump
+      position:
+        x: 1248
+        'y': 360
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: upsertMemory
+      configuration:
+        itemVariable: container
+        iterateList: true
+        listSource: fromJSON($["sshDump"].data.stdout).containers
+        matchList:
+          - name: Name
+            value: container.name
+        namespace: coolifyStats
+        valueList:
+          - name: Name
+            value: container.name
+          - name: Image
+            value: container.image
+          - name: Status
+            value: container.status
+          - name: CPU
+            value: container.cpu_pct
+          - name: Memory
+            value: container.mem_pct
+      id: upsertmemory-upsertmemory-vq6jds
+      name: coolifyStats
+      position:
+        x: 1968
+        'y': 456
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: addMemory
+      configuration:
+        iterateList: false
+        namespace: coolifyHost
+        valueList:
+          - name: timestamp
+            value: '{{fromJSON($["sshDump"].data.stdout).ts}}'
+          - name: CPU
+            value: '{{fromJSON($["sshDump"].data.stdout).host.cpu_pct}}'
+          - name: MemoryUsed
+            value: '{{fromJSON($["sshDump"].data.stdout).host.mem_used}}'
+          - name: MemoryTotal
+            value: '{{fromJSON($["sshDump"].data.stdout).host.mem_total}}'
+          - name: DiskUsed
+            value: '{{fromJSON($["sshDump"].data.stdout).host.disk_used}}'
+          - name: DiskTotal
+            value: '{{fromJSON($["sshDump"].data.stdout).host.disk_total}}'
+          - name: UptimeS
+            value: '{{fromJSON($["sshDump"].data.stdout).host.uptime_s}}'
+      id: component-node-rocln5
+      name: coolifyHost
+      position:
+        x: 1968
+        'y': 720
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: coolify.listServices
+      configuration: {}
+      id: coolify-listservices-coolify-listservices-iwmbto
+      integration:
+        id: 6c5666c7-ca87-4861-9ccb-ecd97c029c1f
+      name: coolify.listServices
+      position:
+        x: 1296
+        'y': -144
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: if
+      configuration:
+        expression: '{{root().data.type == "app"}}'
+      id: if-if-w3pdj7
+      name: if
+      position:
+        x: 1224
+        'y': 1056
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: upsertMemory
+      configuration:
+        itemVariable: svc
+        iterateList: true
+        listSource: $["coolify.listServices"].data.services
+        matchList:
+          - name: UUID
+            value: svc.uuid
+        namespace: coolifyServices
+        valueList:
+          - name: Name
+            value: svc.name
+          - name: Status
+            value: svc.status
+          - name: UUID
+            value: svc.uuid
+      id: coolifyapps-coolifyapps-2-lc86ai
+      name: coolifyServices
+      position:
+        x: 1824
+        'y': -168
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: start
+      configuration:
+        templates:
+          - name: Trigger Scan
+            parameters: []
+            payload: {}
+      id: component-node-idrqtd
+      name: triggerScan
+      position:
+        x: 672
+        'y': 312
+      type: TYPE_TRIGGER
+      isCollapsed: false
+    - component: coolify.controlService
+      configuration:
+        operation: restart
+        service: '{{ root().data.name }}'
+      id: coolify-controlservice-coolify-controlservice-r3n7c6
+      integration:
+        id: 6c5666c7-ca87-4861-9ccb-ecd97c029c1f
+      name: coolify.controlService
+      position:
+        x: 1848
+        'y': 1176
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: coolify.listApplications
+      configuration: {}
+      id: coolify-listapplications-coolify-listapplications-9cp6fn
+      integration:
+        id: 6c5666c7-ca87-4861-9ccb-ecd97c029c1f
+      name: coolify.listApplications
+      position:
+        x: 1296
+        'y': 168
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: upsertMemory
+      configuration:
+        itemVariable: app
+        iterateList: true
+        listSource: $["coolify.listApplications"].data.applications
+        matchList:
+          - name: UUID
+            value: app.uuid
+        namespace: coolifyApps
+        valueList:
+          - name: Name
+            value: app.name
+          - name: FQDN
+            value: app.fqdn
+          - name: Repo
+            value: app.gitRepository
+          - name: Status
+            value: app.status
+          - name: UUID
+            value: app.uuid
+      id: component-node-shaj6d
+      name: coolifyApps
+      position:
+        x: 1824
+        'y': 96
+      type: TYPE_ACTION
+      isCollapsed: false
+    - component: start
+      configuration:
+        templates:
+          - name: Trigger Coolify Restart
+            parameters:
+              - defaultString: app
+                name: type
+                title: null
+                type: string
+              - name: name
+                type: string
+            payload:
+              name: '{{ parameters.name }}'
+              type: '{{ parameters.type }}'
+      id: start-start-g049xn
+      name: triggerCoolifyRestart
+      position:
+        x: 648
+        'y': 1056
+      type: TYPE_TRIGGER
+      isCollapsed: false
+  edges:
+    - channel: default
+      sourceId: component-node-idrqtd
+      targetId: coolify-listapplications-coolify-listapplications-9cp6fn
+    - channel: default
+      sourceId: coolify-listapplications-coolify-listapplications-9cp6fn
+      targetId: component-node-shaj6d
+    - channel: default
+      sourceId: component-node-idrqtd
+      targetId: coolify-listservices-coolify-listservices-iwmbto
+    - channel: default
+      sourceId: coolify-listservices-coolify-listservices-iwmbto
+      targetId: coolifyapps-coolifyapps-2-lc86ai
+    - channel: default
+      sourceId: component-node-idrqtd
+      targetId: ssh-ssh-jca97f
+    - channel: success
+      sourceId: ssh-ssh-jca97f
+      targetId: component-node-rocln5
+    - channel: success
+      sourceId: ssh-ssh-jca97f
+      targetId: upsertmemory-upsertmemory-vq6jds
+    - channel: default
+      sourceId: start-start-g049xn
+      targetId: if-if-w3pdj7
+    - channel: 'true'
+      sourceId: if-if-w3pdj7
+      targetId: coolify-controlapplication-coolify-controlapplication-j8d2ha
+    - channel: 'false'
+      sourceId: if-if-w3pdj7
+      targetId: coolify-controlservice-coolify-controlservice-r3n7c6

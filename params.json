@@ -1,0 +1,28 @@
+{
+    "install_params": [
+      {
+        "name": "ssh_host",
+        "label": "SSH Host",
+        "type": "string",
+        "placeholder": "1.1.1.1",
+        "description": "Coolify host IP for SSH",
+        "required": true
+      },
+      {
+        "name": "ssh_user",
+        "label": "SSH User",
+        "type": "string",
+        "placeholder": "not-root",
+        "description": "Coolify user for SSH",
+        "required": true
+      },
+      {
+        "name": "ssh_secret_name",
+        "label": "SSH Secret Name",
+        "type": "SECRET_PICKER",
+        "placeholder": "not-root",
+        "description": "Make sure it's created in your org's secrets. The key should be \"pw\"",
+        "required": true
+      }
+    ]
+  }

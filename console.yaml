@@ -1,0 +1,225 @@
+sion: v1
+kind: Console
+metadata:
+  canvasId: d97d1b41-e816-4eae-b57b-44e65da734d5
+  name: Coolify Watcher
+spec:
+  panels:
+    - id: coolify-apps
+      type: table
+      content:
+        dataSource:
+          kind: memory
+          namespace: coolifyApps
+        render:
+          columns:
+            - field: Name
+              format: text
+              label: Name
+            - field: Repo
+              format: text
+              label: Repo
+            - field: Status
+              format: status
+              label: Status
+          kind: table
+          rowActions:
+            - hook: run
+              icon: refresh
+              kind: trigger
+              label: Restart
+              node: triggerCoolifyRestart
+              payload:
+                name: '{{ UUID }}'
+                type: app
+          rowStyles:
+            - field: Status
+              op: eq
+              tone: green-soft
+              value: running:healthy
+            - field: Status
+              op: contains
+              tone: dimmed
+              value: exited
+        title: Coolify Apps
+    - id: coolify-services
+      type: table
+      content:
+        dataSource:
+          kind: memory
+          namespace: coolifyServices
+        render:
+          columns:
+            - field: Name
+              format: text
+              label: Name
+            - field: Status
+              format: status
+              label: Status
+          kind: table
+          rowActions:
+            - hook: run
+              icon: refresh
+              kind: trigger
+              label: Restart
+              node: triggerCoolifyRestart
+              payload:
+                name: '{{ UUID }}'
+                type: service
+          rowStyles:
+            - field: Status
+              op: contains
+              tone: red-soft
+              value: degraded
+            - field: Status
+              op: eq
+              tone: green-soft
+              value: running:healthy
+        title: Coolify Services
+    - id: run
+      type: node
+      content:
+        node: triggerScan
+        showRun: true
+        title: Refresh data
+    - id: containers
+      type: chart
+      content:
+        dataSource:
+          kind: memory
+          namespace: coolifyStats
+        render:
+          kind: chart
+          series:
+            - field: Memory
+              label: Memory
+              suffix: '%'
+            - field: CPU
+              label: CPU
+              suffix: '%'
+          sort:
+            field: CPU
+            order: desc
+          type: bar
+          xField: '{{ substring(Name, 0, 20) }}'
+          xFormat: text
+        title: Containers
+    - id: host
+      type: chart
+      content:
+        dataSource:
+          kind: memory
+          namespace: coolifyHost
+        render:
+          kind: chart
+          series:
+            - field: CPU
+              format: percent
+              label: CPU
+            - field: '{{ float(MemoryUsed) / float(MemoryTotal) * 100 }}'
+              format: percent
+              label: Mem used
+            - field: '{{ float(DiskUsed) / float(DiskTotal) * 100 }}'
+              format: percent
+              label: Disk used
+          sort:
+            field: timestamp
+          type: bar
+          xField: timestamp
+          xFormat: relative
+        title: Host
+    - id: summary
+      type: html
+      content:
+        body: >-
+          <h1>Last server snapshot at: {{formatDate(last.createdAt, "yyyy-MM-dd HH:mm")}}</h1>
+
+          <div class="mt-2 mb-1 text-base font-medium text-heading">CPU: {{last.CPU}}%</div>
+
+          <div class="w-full bg-secondary rounded-full h-2.5">
+            <div class="bg-primary h-2.5 rounded-full" style="width: {{last.CPU}}%"></div>
+          </div>
+
+          <div class="mt-2 mb-1 text-base font-medium text-heading">Memory: {{ int(float(last.MemoryUsed) /
+          float(last.MemoryTotal) * 10000 + 0.5) / 100 }}%</div>
+
+          <div class="w-full bg-secondary rounded-full h-2.5">
+            <div class="bg-primary h-2.5 rounded-full" style="width: {{ int(float(last.MemoryUsed) / float(last.MemoryTotal) * 10000 + 0.5) / 100 }}%"></div>
+          </div>
+
+          <div class="mt-2 mb-1 text-base font-medium text-heading">Disk: {{ int(float(last.DiskUsed) /
+          float(last.DiskTotal) * 10000 + 0.5) / 100 }}%</div>
+
+          <div class="w-full bg-secondary rounded-full h-2.5">
+            <div class="bg-primary h-2.5 rounded-full" style="width: {{ int(float(last.DiskUsed) / float(last.DiskTotal) * 10000 + 0.5) / 100 }}%"></div>
+          </div>
+        title: Summary
+        variables:
+          - name: last
+            source:
+              kind: memory
+              namespace: coolifyHost
+    - id: cpu
+      type: number
+      content:
+        dataSource:
+          kind: memory
+          namespace: coolifyHost
+        render:
+          aggregation: first
+          field: CPU
+          format: percent
+          kind: number
+          label: CPU
+          sparklineField: CPU
+        title: CPU
+  layout:
+    - i: coolify-apps
+      x: 5
+      'y': 5
+      w: 7
+      h: 7
+      minW: 2
+      minH: 2
+    - i: coolify-services
+      x: 0
+      'y': 5
+      w: 5
+      h: 7
+      minW: 2
+      minH: 2
+    - i: run
+      x: 10
+      'y': 0
+      w: 2
+      h: 5
+      minW: 2
+      minH: 2
+    - i: containers
+      x: 0
+      'y': 12
+      w: 12
+      h: 6
+      minW: 2
+      minH: 2
+    - i: host
+      x: 0
+      'y': 18
+      w: 12
+      h: 5
+      minW: 2
+      minH: 2
+    - i: summary
+      x: 0
+      'y': 0
+      w: 8
+      h: 5
+      minW: 2
+      minH: 2
+    - i: cpu
+      x: 8
+      'y': 0
+      w: 2
+      h: 5
+      minW: 2
+      minH: 2
