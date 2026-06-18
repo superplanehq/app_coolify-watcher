@@ -1,4 +1,4 @@
-sion: v1
+apiVersion: v1
 kind: Canvas
 metadata:
   id: 0a770706-b2c1-462b-acb1-30e16253210a
