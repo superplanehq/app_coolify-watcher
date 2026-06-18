@@ -1,4 +1,4 @@
-r/bin/env bash
+#!/usr/bin/env bash
 # coolify-health-collector.sh
 
 set -eo pipefail
